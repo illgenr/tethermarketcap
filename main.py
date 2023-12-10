@@ -9,7 +9,7 @@ def get_tether_market_cap():
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
-        return data['tether']['usd_market_cap']
+        return int(data['tether']['usd_market_cap'])
     except requests.RequestException as e:
         print(f"Error fetching market cap: {e}")
         return None
