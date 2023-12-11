@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+import csv
 from datetime import datetime
 
 def get_tether_market_cap():
@@ -15,11 +16,12 @@ def get_tether_market_cap():
         return None
 
 def get_filename(base, date):
-    return os.path.join("data", f"{base}_{date}.txt")
+    return os.path.join("data", f"{base}_{date}.csv")
 
-def write_to_file(filename, content, mode='w'):
-    with open(filename, mode) as file:
-        file.write(content)
+def write_to_csv(filename, data, mode='a'):
+    with open(filename, mode, newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(data)
 
 def ensure_directory():
     if not os.path.exists("data"):
@@ -46,17 +48,22 @@ def main():
             filename = get_filename(base_filename, current_date)
             changes_filename = get_filename(changes_base_filename, current_date)
 
-            write_to_file(filename, f"{timestamp}: {market_cap}\n", 'a')
+            # Check for new day to write headers
+            if last_market_cap is None:
+                write_to_csv(filename, ["Timestamp", "Market Cap"], 'w')
+                write_to_csv(changes_filename, ["Timestamp", "Old Market Cap", "New Market Cap", "Difference"], 'w')
+
+            # Writing the current market cap to CSV
+            write_to_csv(filename, [timestamp, market_cap])
 
             if last_market_cap is not None and market_cap != last_market_cap:
                 difference = market_cap - last_market_cap
-                change_log = f"{timestamp}: {last_market_cap} to {market_cap} Change: {difference}\n"
-                write_to_file(changes_filename, change_log, 'a')
+                change_log = [timestamp, last_market_cap, market_cap, difference]
+                write_to_csv(changes_filename, change_log)
 
             last_market_cap = market_cap
 
-            #wait 30 minutes
-        time.sleep(1800)
+        time.sleep(300)
 
 if __name__ == "__main__":
     main()
